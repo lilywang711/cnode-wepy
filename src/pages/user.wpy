@@ -1,0 +1,51 @@
+<style lang="less">
+</style>
+<template>
+  <view class="container">
+    user
+  </view>
+</template>
+
+<script>
+  import wepy from 'wepy'
+  import { connect } from 'wepy-redux'
+  @connect({
+  })
+
+  export default class User extends wepy.page {
+    config = {
+      navigationBarTitleText: '个人中心'
+    }
+
+    mixins = []
+
+    data = {
+    }
+
+    computed = {
+      now () {
+        return +new Date()
+      }
+    }
+
+    methods = {
+    }
+    getData () {
+      let self = this
+      wepy.request({
+        url: 'https://cnodejs.org/api/v1/topics',
+        success: function (d) {
+          console.log(d)
+          self.$apply()
+        }
+      })
+    }
+
+    events = {
+    }
+
+    onLoad() {
+      this.getData()
+    }
+  }
+</script>

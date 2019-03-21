@@ -1,0 +1,60 @@
+<style lang="less">
+</style>
+<template>
+  <view class="container">
+    {{post.title}}
+  </view>
+</template>
+
+<script>
+  import wepy from 'wepy'
+  import moment from 'moment'
+  import 'moment/locale/zh-cn'
+  import { connect } from 'wepy-redux'
+  @connect({
+  })
+
+  export default class Topic extends wepy.page {
+    config = {
+      navigationBarTitleText: '主题'
+    }
+
+    mixins = []
+
+    data = {
+      post: {}
+    }
+
+    computed = {
+      now () {
+        return +new Date()
+      }
+    }
+
+    methods = {
+    }
+    filterData (post) {
+      post.create_at = moment(post.create_at, 'YYYY-MM-DD').startOf('day').fromNow()
+      return post
+    }
+    getData () {
+      let self = this
+      wepy.request({
+        url: `https://cnodejs.org/api/v1/topic/${this.id}`,
+        success: function (d) {
+          self.post = self.filterData(d.data)
+          self.$apply()
+        }
+      })
+    }
+
+    events = {
+    }
+
+    onLoad(opts) {
+      const { id } = opts
+      this.id = id
+      this.getData()
+    }
+  }
+</script>

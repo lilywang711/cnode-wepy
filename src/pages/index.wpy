@@ -1,0 +1,246 @@
+<style lang="less">
+.index {
+  >.hd {
+    width: 100%;
+    background-color: hsla(0,0%,100%,.95);
+    position: fixed;
+    top: 0;
+    left: 0;
+    transition: all .3s ease;
+    box-shadow: 0 0 5rpx rgba(0,0,0,.2);
+    z-index: 6;
+    .container {
+      height: 88rpx;
+      display: flex;
+      justify-content: center;
+      align-items: center;
+      font-size: 28rpx;
+    }
+    .hd-tabs {
+      display: flex;
+      align-items: center;
+      width: 100%;
+      .hd-tab {
+        font-size: 32rpx;
+        padding: 10rpx 20rpx 0;
+        color: #2c3e50;
+        font-weight: bolder;
+        &.active {
+          color: #c85143;
+        }
+      }
+    }
+  }
+  >.bd {
+    padding: 95rpx 20rpx 0;
+    .posts-list {
+      .post-item {
+        padding: 10rpx 0;
+        .hd {
+          display: flex;
+          align-items: center;
+        }
+        .bd {
+          padding-top: 20rpx;
+          display: flex;
+          font-size: 26rpx;
+          width: 100%;
+          color: #34495e;
+          .between {
+            flex: 1;
+            display: flex;
+            justify-content: space-between;
+            .right {
+              text-align: right;
+            }
+          }
+        }
+      }
+      .post-title {
+        font-size: 32rpx;
+        color: #2c3e50;
+        white-space: nowrap;
+        text-overflow: ellipsis;
+        overflow: hidden;
+        font-weight: bolder;
+        padding-left: 20rpx;
+        flex: 1;
+      }
+    }
+  }
+}
+  
+</style>
+<template>
+  <view class="index">
+    <view class="hd">
+      <view class="container">
+        <view class="hd-tabs" >
+          <repeat for="{{tabs}}" key="index" index="index">
+          <view class="hd-tab, {{item.type === query.tab ? 'active' : ''}}" @tap="onClickTab({{item.type}})">{{item.title}}</view>
+        </repeat>
+        </view>
+      </view>
+    </view>
+    <view class="bd">
+      <view class="posts-list">
+        <repeat for="{{postList}}" key="index" index="index" item="post">
+          <navigator url="/pages/topic?id={{post.id}}">
+            <view class="post-item">
+              <view class="hd">
+                <view class="post-type, {{post.top ? 'top': post.good ? 'good' : post.tab || ''}}">
+                  {{post.top ? '置顶': post.good ? '精华' : tabhash[post.tab] || '暂无'}}
+                </view>
+                <view class="post-title">{{post.title}}</view>
+              </view>
+              <view class="bd">
+                <image
+                class="user-avatar"
+                lazy-load="true"
+                src="{{post.author.avatar_url}}"
+                />
+                <view class="between">
+                  <view class="">
+                    <view>{{post.author.loginname}}</view>
+                    <view>{{post.create_at}}</view>
+                  </view>
+                  <view class="right">
+                    <view>
+                      <text>{{post.reply_count}}/</text>
+                      <text>{{post.visit_count}}</text>
+                    </view>
+                    <view>{{post.last_reply_at}}</view>
+                  </view>
+                </view>
+              </view>
+              <view class="post-info">
+              </view>
+            </view>
+          </navigator>
+        </repeat>
+      </view>
+    </view>
+  </view>
+</template>
+
+<script>
+  import wepy from 'wepy'
+  import moment from 'moment'
+  import 'moment/locale/zh-cn'
+  import { connect } from 'wepy-redux'
+  @connect({
+  })
+
+  export default class Index extends wepy.page {
+    config = {
+      navigationBarTitleText: 'CNode',
+      enablePullDownRefresh: true,
+      backgroundTextStyle: 'dark'
+
+    }
+
+    mixins = []
+
+    data = {
+      postList: [],
+      query: {
+        page: 1,
+        tab: 'all',
+        limit: 20
+      },
+      tabs: [
+        {
+          title: '全部',
+          type: 'all'
+        }, {
+          title: '精华',
+          type: 'good'
+        }, {
+          title: '分享',
+          type: 'share'
+        }, {
+          title: '问答',
+          type: 'ask'
+        }, {
+          title: '招聘',
+          type: 'job'
+        }
+      ],
+      tabhash: {
+        good: '精华',
+        share: '分享',
+        ask: '问答',
+        job: '招聘'
+      }
+    }
+
+    computed = {
+      now () {
+        return +new Date()
+      }
+    }
+    methods = {
+      onClickTab (type) {
+        this.query.tab = type
+        this.postList = []
+        this.getData()
+      }
+    }
+    getDateDiff (date) {
+      let now = new Date()
+      date = new Date(date)
+      let diffYear = now.getFullYear() - date.getFullYear()
+      if (diffYear) return diffYear + '年前'
+      let diffMonth = now.getMonth() - date.getMonth()
+      if (diffMonth) return diffMonth + '月前'
+      let diffDate = now.getDate() - date.getDate()
+      if (diffDate) return diffDate + '天前'
+      let diffHour = now.getHours() - date.getHours()
+      if (diffHour) return diffHour + '小时前'
+      let diffMinite = now.getMinutes() - date.getMinutes()
+      if (diffMinite) return diffMinite + '分钟前'
+    }
+    filterData (data) {
+      let rst = data.map(item => {
+        return {
+          ...item,
+          last_reply_at: moment(item.last_reply_at, 'YYYY-MM-DD').startOf('day').fromNow(),
+          create_at: moment(item.create_at, 'YYYY-MM-DD').startOf('day').fromNow()
+        }
+      })
+      return rst
+    }
+    getData () {
+      let self = this
+      return new Promise((resolve, reject) => {
+        wepy.request({
+          url: 'https://cnodejs.org/api/v1/topics',
+          data: self.query,
+          success: function (d) {
+            self.postList = self.postList.concat(self.filterData(d.data))
+            self.$apply()
+            resolve()
+          },
+          fail(err) {
+            reject(err)
+          }
+        })
+      })
+    }
+    onPullDownRefresh () {
+      this.query.page = 1
+      this.getData()
+      wepy.stopPullDownRefresh()
+    }
+    onReachBottom () {
+      this.query.page++
+      this.getData()
+    }
+    events = {
+    }
+
+    onLoad() {
+      this.getData()
+    }
+  }
+</script>
