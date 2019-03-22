@@ -1,8 +1,19 @@
 <style lang="less">
+  .user {
+    .post-container {
+
+    }
+    .review-container {
+
+    }
+  }
 </style>
 <template>
-  <view class="container">
-    user
+  <view class="user">
+    <div class="post-container">
+      <h1>{{}}</h1>
+    </div>
+    <div class="review-container"></div>
   </view>
 </template>
 
@@ -20,6 +31,7 @@
     mixins = []
 
     data = {
+  
     }
 
     computed = {

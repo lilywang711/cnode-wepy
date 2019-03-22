@@ -1,8 +1,57 @@
 <style lang="less">
+  .topic {
+    .post-title {
+      padding: 10rpx 10rpx;
+      margin: 30rpx 0;
+      font-size: 36rpx;
+      color: #2c3e50;
+      line-height: 1.5;
+      background-color: #f0f0f0;
+      border-radius: 10rpx;
+    }
+    .post-container {
+      padding: 20rpx;
+      .author-info {
+        display: flex;
+      }
+      .between {
+        flex: 1;
+      }
+    }
+    .review-container {
+
+    }
+  }
 </style>
 <template>
-  <view class="container">
-    {{post.title}}
+  <view class="topic">
+    <view class="post-container">
+      <view class="post-title">{{post.title}}</view>
+      <view class="author-info">
+        <image
+        class="user-avatar"
+        lazy-load="true"
+        src="{{post.author.avatar_url}}"
+        />
+        <view class="between">
+          <view class="">
+            <view>{{post.author.loginname}}</view>
+            <view class="time">{{post.create_at}}</view>
+          </view>
+          <view class="right">
+            <view class="reply-count">
+              <view class="post-type, {{post.top ? 'top': post.good ? 'good' : post.tab || ''}}">
+                {{post.top ? '置顶': post.good ? '精华' : tabhash[post.tab] || '暂无'}}
+              </view>
+            </view>
+            <view class="time">{{post.visit_count}}次浏览</view>
+          </view>
+        </view>
+      </view>
+      <view class="markdown-body topic-content">
+        </view> 
+    </view>
+    <view class="review-container"></view>
   </view>
 </template>
 
@@ -22,6 +71,7 @@
     mixins = []
 
     data = {
+      id: '5bd4772a14e994202cd5bdb7',
       post: {}
     }
 
