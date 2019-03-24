@@ -17,6 +17,7 @@
   "author": "lily <lilywang.cd@gmail.com>",
   "license": "MIT",
   "dependencies": {
+    "dayjs": "^1.8.11",
     "moment": "^2.24.0",
     "redux": "^3.7.2",
     "redux-actions": "^2.2.1",

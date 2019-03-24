@@ -1,13 +1,30 @@
 <style lang="less">
+  @import "../utils/wxParse/wxParse.wxss";
   .topic {
     .post-title {
-      padding: 10rpx 10rpx;
-      margin: 30rpx 0;
       font-size: 36rpx;
       color: #2c3e50;
       line-height: 1.5;
+      flex: 1;
+      padding-left: 10rpx;
+    }
+    .post-type {
+      display: flex;
+      align-items: center;
+      justify-content: center;
+    }
+    .title-container {
+      padding: 10rpx 10rpx;
       background-color: #f0f0f0;
       border-radius: 10rpx;
+      margin:30rpx 0;
+    }
+    .is-collect {
+      text-align: right;
+    }
+    .icon-collect {
+      width: 45rpx;
+      height: 45rpx;
     }
     .post-container {
       padding: 20rpx;
@@ -18,15 +35,33 @@
         flex: 1;
       }
     }
+    .topic-content {
+      margin-top: 40rpx;
+    }
     .review-container {
-
+      .review-detail {
+        padding: 20rpx;
+        border-bottom: 2rpx solid #eee;
+        .between {
+          .left {
+            display: flex;
+          }
+        }
+        
+      }
     }
   }
 </style>
 <template>
   <view class="topic">
+    <import src="../utils/wxParse/wxParse.wxml"/>
     <view class="post-container">
-      <view class="post-title">{{post.title}}</view>
+      <view class="flex title-container">
+        <view class="post-type, {{post.top ? 'top': post.good ? 'good' : post.tab || ''}}">
+          {{post.top ? '置顶': post.good ? '精华' : tabhash[post.tab] || '暂无'}}
+        </view>
+        <view class="post-title">{{post.title}}</view>
+      </view>
       <view class="author-info">
         <image
         class="user-avatar"
@@ -35,31 +70,67 @@
         />
         <view class="between">
           <view class="">
-            <view>{{post.author.loginname}}</view>
-            <view class="time">{{post.create_at}}</view>
+            <view class="loginname">{{post.author.loginname}}</view>
+            <view class="reply-time">{{post.create_at}}</view>
           </view>
           <view class="right">
-            <view class="reply-count">
-              <view class="post-type, {{post.top ? 'top': post.good ? 'good' : post.tab || ''}}">
-                {{post.top ? '置顶': post.good ? '精华' : tabhash[post.tab] || '暂无'}}
-              </view>
+            <view class="is-collect" @tap="onClickCollect">
+              <image
+                wx:if="{{post.is_collect}}"
+                class="icon-collect"
+                lazy-load="true"
+                src="../images/collect-yes.png"
+              />
+              <image
+                wx:else
+                class="icon-collect"
+                lazy-load="true"
+                src="../images/collect-no.png"
+              />
             </view>
-            <view class="time">{{post.visit_count}}次浏览</view>
+            <view class="reply-time">{{post.visit_count}}次浏览</view>
           </view>
         </view>
       </view>
       <view class="markdown-body topic-content">
-        </view> 
+        <view class="wxParse">
+          <template  is="wxParse" data="{{wxParseData: post.content}}"/>
+        </view>
+        </view>
     </view>
-    <view class="review-container"></view>
+    <view class="review-container">
+      <view class="reply-count">有{{post.reply_count}}条回复</view>
+      <repeat for="{{post.replies}}" key="index" index="index" item="item">
+        <view class="review-detail wxParse">
+          <view class="between">
+            <view class="left">
+              <image
+                class="user-avatar"
+                lazy-load="true"
+                src="{{item.author.avatar_url}}"
+              />
+              <view class="disply: flex; flex-direction: column">
+                <view class="loginname">{{item.author.loginname}}</view>
+                <view class="reply-time">{{item.create_at}}</view>
+              </view>
+            </view>
+          </view>
+          <template is="wxParse" data="{{wxParseData: item.nodes}}"/>
+        </view>
+        </repeat>
+    </view>
   </view>
 </template>
 
 <script>
   import wepy from 'wepy'
-  import moment from 'moment'
-  import 'moment/locale/zh-cn'
+  import dayjs from 'dayjs'
+  import relativeTime from 'dayjs/plugin/relativeTime'
+  import 'dayjs/locale/zh-cn'
   import { connect } from 'wepy-redux'
+  import WxParse from '../utils/wxParse/wxParse.js'
+  dayjs.extend(relativeTime)
+  dayjs.locale('zh-cn')
   @connect({
   })
 
@@ -72,28 +143,58 @@
 
     data = {
       id: '5bd4772a14e994202cd5bdb7',
+      accesstoken: 'd528ca23-2f74-46ed-8190-da8e5df2e053',
       post: {}
     }
 
     computed = {
-      now () {
-        return +new Date()
-      }
     }
 
     methods = {
+      wxParseTagATap (e) {
+        console.log(e)
+      },
+      wxParseImgLoad () {
+      },
+      onClickCollect () {
+        const url = this.post.is_collect ? 'de_collect' : 'collect'
+        wepy.request({
+          method: 'POST',
+          url: 'https://cnodejs.org/api/v1/topic_collect/' + url,
+          data: {
+            accesstoken: this.accesstoken,
+            topic_id: this.id
+          },
+          success: (d) => {
+            this.post.is_collect = !this.post.is_collect
+            this.$apply()
+          }
+        })
+      }
     }
     filterData (post) {
-      post.create_at = moment(post.create_at, 'YYYY-MM-DD').startOf('day').fromNow()
-      return post
+      return {
+        ...post,
+        create_at: dayjs(post.create_at).fromNow(),
+        content: WxParse.wxParse('article', 'html', post.content, this, 5),
+        replies: post.replies.map(item => {
+          return {
+            ...item,
+            create_at: dayjs(item.create_at).fromNow(),
+            nodes: WxParse.wxParse('replies', 'html', item.content, this, 5)
+          }
+        })
+      }
     }
     getData () {
-      let self = this
       wepy.request({
         url: `https://cnodejs.org/api/v1/topic/${this.id}`,
-        success: function (d) {
-          self.post = self.filterData(d.data)
-          self.$apply()
+        data: {
+          accesstoken: this.accesstoken
+        },
+        success: (d) => {
+          this.post = this.filterData(d.data)
+          this.$apply()
         }
       })
     }
@@ -103,7 +204,7 @@
 
     onLoad(opts) {
       const { id } = opts
-      this.id = id
+      this.id = id || '5bd4772a14e994202cd5bdb7'
       this.getData()
     }
   }

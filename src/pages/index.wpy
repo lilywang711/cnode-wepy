@@ -99,15 +99,15 @@
                 />
                 <view class="between">
                   <view class="">
-                    <view>{{post.author.loginname}}</view>
-                    <view>{{post.create_at}}</view>
+                    <view class="loginname">{{post.author.loginname}}</view>
+                    <view class="reply-time">{{post.create_at}}</view>
                   </view>
                   <view class="right">
                     <view>
                       <text>{{post.reply_count}}/</text>
                       <text>{{post.visit_count}}</text>
                     </view>
-                    <view>{{post.last_reply_at}}</view>
+                    <view class="reply-time">{{post.last_reply_at}}</view>
                   </view>
                 </view>
               </view>
@@ -209,14 +209,13 @@
       return rst
     }
     getData () {
-      let self = this
       return new Promise((resolve, reject) => {
         wepy.request({
           url: 'https://cnodejs.org/api/v1/topics',
-          data: self.query,
-          success: function (d) {
-            self.postList = self.postList.concat(self.filterData(d.data))
-            self.$apply()
+          data: this.query,
+          success: (d) => {
+            this.postList = this.postList.concat(this.filterData(d.data))
+            this.$apply()
             resolve()
           },
           fail(err) {

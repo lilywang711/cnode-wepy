@@ -1,0 +1,96 @@
+<style lang="less">
+  .login {
+  }
+</style>
+<template>
+  <view class="login">
+    <view class="login-container">
+      {{userInfo.loginname}}
+      <input type="text" value="{{accesstoken}}" @input="onTokenInput" />
+      <button @tap="onLogin">登录</button>
+    </view>
+    <toast />
+  </view>
+</template>
+
+<script>
+  import wepy from 'wepy'
+  import Toast from 'wepy-com-toast'
+  import { connect } from 'wepy-redux'
+  import { SAVEUSERINFO } from '../store/types/user'
+  @connect({
+  }, {
+    saveUserInfo: SAVEUSERINFO
+  })
+
+  export default class Login extends wepy.page {
+    config = {
+      navigationBarTitleText: '登录'
+    }
+    components = {
+      toast: Toast
+    }
+
+    mixins = []
+
+    data = {
+      accesstoken: ''
+    }
+
+    computed = {
+    }
+
+    methods = {
+      onLogin () {
+        wepy.request({
+          method: 'POST',
+          url: 'https://cnodejs.org/api/v1/accesstoken',
+          data: {
+            accesstoken: this.accesstoken
+          },
+          success: (d) => {
+            wepy.setStorageSync('accesstoken', this.accesstoken)
+            this.methods.saveUserInfo(d)
+            this.$invoke('toast', 'show', {
+              title: '登录成功',
+              img: 'https://raw.githubusercontent.com/kiinlam/wetoast/master/images/star.png'
+            })
+            setTimeout(() => {
+              wepy.switchTab({
+                url: '/pages/user'
+              })
+            }, 2000)
+          },
+          fail: () => {
+            this.$invoke('toast', 'show', {
+              title: '错误的 token',
+              img: 'https://raw.githubusercontent.com/kiinlam/wetoast/master/images/star.png'
+            })
+          }
+        })
+      },
+      onTokenInput (e) {
+        let val = e.detail.value
+        this.accesstoken = val
+      }
+    }
+    getUserInfo () {
+      wepy.request({
+        method: 'POST',
+        url: 'https://cnodejs.org/api/v1/accesstoken',
+        data: {
+          accesstoken: this.accesstoken
+        },
+        success: (d) => {
+          wepy.setStorageSync('accesstoken', this.accesstoken)
+          this.$apply()
+        }
+      })
+    }
+    events = {
+    }
+
+    onLoad() {
+    }
+  }
+</script>

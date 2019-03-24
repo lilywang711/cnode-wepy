@@ -10,19 +10,21 @@
 </style>
 <template>
   <view class="user">
-    <div class="post-container">
-      <h1>{{}}</h1>
-    </div>
-    <div class="review-container"></div>
+    <view class="post-container">
+      {{userInfo.loginname}}
+    </view>
+    <view class="review-container"></view>
   </view>
 </template>
 
 <script>
   import wepy from 'wepy'
   import { connect } from 'wepy-redux'
-  @connect({
+    @connect({
+    userInfo (state) {
+      return state.user.userInfo
+    }
   })
-
   export default class User extends wepy.page {
     config = {
       navigationBarTitleText: '个人中心'
@@ -31,24 +33,29 @@
     mixins = []
 
     data = {
-  
+      accesstoken: ''
     }
 
     computed = {
-      now () {
-        return +new Date()
-      }
     }
 
     methods = {
     }
+    getUserInfo () {
+      // wepy.request({
+      //   method: 'POST',
+      //   url: 'https://cnodejs.org/api/v1/accesstoken',
+      //   data: {
+      //     accesstoken: this.accesstoken
+      //   }
+      // })
+    }
     getData () {
-      let self = this
       wepy.request({
         url: 'https://cnodejs.org/api/v1/topics',
-        success: function (d) {
+        success: (d) => {
           console.log(d)
-          self.$apply()
+          this.$apply()
         }
       })
     }
@@ -57,7 +64,15 @@
     }
 
     onLoad() {
-      this.getData()
+      let token = wepy.getStorageSync('accesstoken')
+      this.accesstoken = token
+      if (token) {
+        this.getUserInfo()
+      } else {
+        this.$navigate({
+          url: '/pages/login'
+        })
+      }
     }
   }
 </script>
